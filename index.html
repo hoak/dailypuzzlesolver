@@ -237,7 +237,7 @@ const themes = {
     'Space':           {'1': '#87CEFA', '2': '#9400D3', '3': '#000080'},
     'Princess':        {'1': '#FFB6C1', '2': '#FF69B4', '3': '#FF1493'},
     'Christmas':       {'1': '#FFFFFF', '2': '#3CB371', '3': '#8B0000'},
-    'Country': {'1': '#87CEFA', '2': '#FFD700', '3': '#006400'},
+    'Country':         {'1': '#87CEFA', '2': '#FFD700', '3': '#006400'},
     'Mardi_Gras':      {'1': '#FFD700', '2': '#3CB371', '3': '#800080'}, 
     'Tropical':        {'1': '#32CD32', '2': '#FF1493', '3': '#40E0D0'},
     'USA':             {'1': '#FF0000', '2': '#FFFFFF', '3': '#000080'},
@@ -432,7 +432,7 @@ async function runSolver() {
             let msg = `Found ${totalCalculated} solutions in ${data.elapsed}s. `;
             
             if (totalCalculated >= 1000) {
-                msg += `(Note: The actual total could be much higher, sometimes as high as 3000!) `;
+                msg += `(Note: The actual total could be as high as 3000!) `;
             } else if (data.timedOut) {
                 msg += `(Search timed out). `;
             }
