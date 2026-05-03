@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HOAK - The Daily Calendar Puzzle</title>
+    <title>HOAK - The Everyday Puzzle</title>
     <style>
         :root {
             --bg: #121212;
@@ -17,11 +17,11 @@
             background-color: var(--bg);
             color: var(--text);
             margin: 0;
-            padding: 1rem; /* Reduced padding for mobile */
+            padding: 1rem; 
             display: flex;
             flex-direction: column;
             align-items: center;
-            overflow-x: hidden; /* Prevent horizontal scroll bounce */
+            overflow-x: hidden; 
         }
         h1 {
             color: var(--accent);
@@ -45,7 +45,6 @@
             text-decoration: underline;
         }
         
-        /* Compact, wrap-friendly controls */
         .controls {
             background-color: var(--panel);
             padding: 1rem;
@@ -66,14 +65,14 @@
             display: flex;
             flex-direction: column;
             gap: 0.2rem;
-            flex: 1 1 auto; /* Allows shrinking and growing */
+            flex: 1 1 auto; 
             min-width: 70px;
         }
         .theme-solve-group {
             display: flex;
             gap: 0.75rem;
             align-items: flex-end;
-            flex: 2 1 auto;
+            flex: 2 1 100%; 
             min-width: 200px;
         }
         .control-group label {
@@ -81,7 +80,8 @@
             color: #aaa;
             text-transform: uppercase;
         }
-        select, button {
+        
+        select {
             padding: 0.6rem;
             font-size: 0.95rem;
             border-radius: 4px;
@@ -93,13 +93,19 @@
             width: 100%;
             box-sizing: border-box;
         }
+        
         button.action-btn {
             background-color: var(--accent);
             color: #fff; 
             font-weight: bold;
+            font-size: 0.95rem;
             transition: opacity 0.2s;
             border: none;
+            border-radius: 4px;
             white-space: nowrap;
+            width: auto; 
+            padding: 0.6rem 1.5rem; 
+            cursor: pointer;
         }
         button.action-btn:hover {
             opacity: 0.8;
@@ -114,7 +120,6 @@
             padding: 0 1rem;
         }
         
-        /* Mobile-friendly viewer */
         .viewer-container {
             display: flex;
             align-items: center;
@@ -123,30 +128,30 @@
             max-width: 500px;
             position: relative;
             margin-bottom: 1rem;
-            touch-action: pan-y; /* Allows vertical scrolling, but captures horizontal swipes */
+            touch-action: pan-y; 
         }
+        
         .nav-arrow {
-            background: rgba(0,0,0,0.5); /* Semi-transparent background for mobile overlay */
+            background: transparent;
             border: none;
             color: var(--accent);
-            font-size: 2.5rem;
+            font-size: 4rem; 
             cursor: pointer;
-            padding: 0.5rem;
-            border-radius: 50%;
-            transition: transform 0.1s, color 0.2s, background 0.2s;
+            padding: 0;
+            transition: transform 0.1s, color 0.2s;
             display: none;
-            position: absolute; /* Hover over the edges of the canvas */
+            position: absolute; 
             z-index: 10;
+            text-shadow: 2px 2px 6px rgba(0,0,0,0.8); 
+            -webkit-tap-highlight-color: transparent; 
         }
         .nav-arrow:hover {
             transform: scale(1.1);
             color: #fff;
-            background: rgba(0,0,0,0.8);
         }
-        #prevBtn { left: -10px; }
-        #nextBtn { right: -10px; }
+        #prevBtn { left: -25px; } 
+        #nextBtn { right: -25px; }
         
-        /* Responsive Canvas scaling */
         canvas {
             background-color: #000;
             border-radius: 6px;
@@ -164,11 +169,10 @@
             text-align: center;
         }
         
-        /* Extra tweaks for very small screens */
         @media (max-width: 400px) {
-            .nav-arrow { font-size: 2rem; padding: 0.3rem; }
-            #prevBtn { left: -5px; }
-            #nextBtn { right: -5px; }
+            .nav-arrow { font-size: 3rem; }
+            #prevBtn { left: -10px; }
+            #nextBtn { right: -10px; }
         }
     </style>
 </head>
@@ -233,11 +237,13 @@ const themes = {
     'Space':           {'1': '#87CEFA', '2': '#9400D3', '3': '#000080'},
     'Princess':        {'1': '#FFB6C1', '2': '#FF69B4', '3': '#FF1493'},
     'Christmas':       {'1': '#FFFFFF', '2': '#3CB371', '3': '#8B0000'},
-    'Country': {'1': '#87CEFA', '2': '#FFD700', '3': '#006400'},
+    'English_Country': {'1': '#87CEFA', '2': '#FFD700', '3': '#006400'},
     'Mardi_Gras':      {'1': '#FFD700', '2': '#3CB371', '3': '#800080'}, 
     'Tropical':        {'1': '#32CD32', '2': '#FF1493', '3': '#40E0D0'},
     'USA':             {'1': '#FF0000', '2': '#FFFFFF', '3': '#000080'},
 };
+
+const rainbowColors = ['#39FF14', '#3CB371', '#006400', '#FFD700', '#FFA500', '#8B0000', '#87CEFA', '#4169E1', '#00008B', '#800080'];
 
 const monthsList = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const mCoords = {};
@@ -278,7 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         tSel.value = "Reef";
         
-        setupSwipeDetection(); // Initialize mobile swipe
+        setupSwipeDetection(); 
     } catch (e) {
         document.getElementById('statusMessage').innerText = "UI Error: " + e.message;
         console.error(e);
@@ -308,15 +314,13 @@ function setupSwipeDetection() {
     }, {passive: true});
 
     function handleSwipe() {
-        if (currentSolutions.length <= 1) return; // Don't swipe if no/one solution
+        if (currentSolutions.length <= 1) return; 
         
-        const swipeThreshold = 50; // Minimum pixel distance for a valid swipe
+        const swipeThreshold = 50; 
         if (touchEndX < touchStartX - swipeThreshold) {
-            // Swiped Left -> Go to Next
             changeSolution(1);
         }
         if (touchEndX > touchStartX + swipeThreshold) {
-            // Swiped Right -> Go to Previous
             changeSolution(-1);
         }
     }
