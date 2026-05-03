@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hoak - The Daily Calendar Puzzle</title>
+    <title>HOAK - The Daily Calendar Puzzle</title>
     <style>
         :root {
             --bg: #121212;
             --panel: #1e1e1e;
             --text: #e0e0e0;
-            --accent: #bb86fc;
+            --accent: #4169E1; /* Updated to Reef middle blue */
             --border: #333;
         }
         body {
@@ -24,8 +24,23 @@
         }
         h1 {
             color: var(--accent);
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.2rem;
             text-align: center;
+        }
+        .subtitle {
+            text-align: center;
+            color: #aaa;
+            margin-top: 0;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+        .subtitle a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .subtitle a:hover {
+            text-decoration: underline;
         }
         .controls {
             background-color: var(--panel);
@@ -63,12 +78,13 @@
         }
         button.action-btn {
             background-color: var(--accent);
-            color: #000;
+            color: #fff; /* Changed to white so it pops better against the blue */
             font-weight: bold;
             transition: opacity 0.2s;
             height: 100%;
             align-self: flex-end;
             padding: 0.75rem 1.5rem;
+            border: none;
         }
         button.action-btn:hover {
             opacity: 0.8;
@@ -118,7 +134,8 @@
 </head>
 <body>
 
-    <h1>Hoak - The Daily Calendar Puzzle</h1>
+    <h1>HOAK - The Daily Calendar Puzzle</h1>
+    <p class="subtitle">Get a Puzzle you can hold from CherryHillTech at <a href="https://www.etsy.com/listing/4498458862" target="_blank">https://www.etsy.com/listing/4498458862</a></p>
     
     <div class="controls">
         <div class="control-group">
@@ -172,7 +189,7 @@ const themes = {
     'Moon':            {'1': '#FFFFFF', '2': '#A9A9A9', '3': '#000000'},
     'Desert':          {'1': '#FFD700', '2': '#D2B48C', '3': '#5C4033'},
     'Reef':            {'1': '#40E0D0', '2': '#4169E1', '3': '#004B49'},
-    'Space':           {'1': '#4169E1', '2': '#9400D3', '3': '#000080'},
+    'Space':           {'1': '#87CEFA', '2': '#9400D3', '3': '#000080'},
     'Princess':        {'1': '#FFB6C1', '2': '#FF69B4', '3': '#FF1493'},
     'Christmas':       {'1': '#FFFFFF', '2': '#3CB371', '3': '#8B0000'},
     'English_Country': {'1': '#87CEFA', '2': '#FFD700', '3': '#006400'},
@@ -204,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
             opt.value = m; opt.text = m;
             mSel.appendChild(opt);
         });
-        mSel.value = "Jul";
+        mSel.value = "Apr";
 
         const dSel = document.getElementById('daySelect');
         for(let i=1; i<=31; i++) {
@@ -212,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
             opt.value = i; opt.text = i;
             dSel.appendChild(opt);
         }
-        dSel.value = "4";
+        dSel.value = "7";
 
         const tSel = document.getElementById('themeSelect');
         Object.keys(themes).forEach(t => {
@@ -316,10 +333,7 @@ async function runSolver() {
     const dPos = dCoords[day];
     const voids = [`${mPos[0]},${mPos[1]}`, `${dPos[0]},${dPos[1]}`];
 
-	//local 
-    //const API_URL = "http://127.0.0.1:5000/solve"; 
-	//railway
-	const API_URL = "https://hoak-solver-backend-puzzle1.up.railway.app/solve";
+    const API_URL = "https://hoak-solver-backend-puzzle1.up.railway.app/solve"; 
 
     try {
         const response = await fetch(API_URL, {
@@ -342,14 +356,12 @@ async function runSolver() {
         if (currentSolutions.length > 0) {
             let msg = `Found ${totalCalculated} solutions in ${data.elapsed}s. `;
             
-            // --- NEW CODE: Check for 1000+ calculations ---
             if (totalCalculated >= 1000) {
                 msg += `(Note: The actual total could be much higher, sometimes as high as 3000!) `;
             } else if (data.timedOut) {
                 msg += `(Search timed out). `;
             }
-            // ----------------------------------------------
-
+            
             statusMsg.innerText = msg;
             
             currentSolIndex = 0;
