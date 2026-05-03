@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hoak - The Daily Calendar Puzzle</title>
+    <style>
+        :root {
+            --bg: #121212;
+            --panel: #1e1e1e;
+            --text: #e0e0e0;
+            --accent: #bb86fc;
+            --border: #333;
+        }
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+        .controls {
+            background-color: var(--panel);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+            max-width: 900px;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        .control-group label {
+            font-size: 0.8rem;
+            color: #aaa;
+            text-transform: uppercase;
+        }
+        select, input[type="number"], button {
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            background-color: #2c2c2c;
+            color: var(--text);
+            outline: none;
+            cursor: pointer;
+        }
+        button.action-btn {
+            background-color: var(--accent);
+            color: #000;
+            font-weight: bold;
+            transition: opacity 0.2s;
+            height: 100%;
+            align-self: flex-end;
+            padding: 0.75rem 1.5rem;
+        }
+        button.action-btn:hover {
+            opacity: 0.8;
+        }
+        .status {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            font-weight: 500;
+            text-align: center;
+            min-height: 1.5rem;
+        }
+        
+        .viewer-container {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .nav-arrow {
+            background: none;
+            border: none;
+            color: var(--accent);
+            font-size: 3rem;
+            cursor: pointer;
+            padding: 0 1rem;
+            transition: transform 0.1s, color 0.2s;
+            display: none;
+        }
+        .nav-arrow:hover {
+            transform: scale(1.2);
+            color: #fff;
+        }
+        
+        canvas {
+            background-color: #000;
+            border-radius: 4px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+        }
+        
+        .counter-text {
+            font-size: 1.1rem;
+            color: #aaa;
+            font-weight: bold;
+            display: none; 
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Hoak - The Daily Calendar Puzzle</h1>
+    
+    <div class="controls">
+        <div class="control-group">
+            <label>Month</label>
+            <select id="monthSelect"></select>
+        </div>
+        
+        <div class="control-group">
+            <label>Day</label>
+            <select id="daySelect"></select>
+        </div>
+        
+        <div class="control-group">
+            <label>Allow Flipping</label>
+            <select id="flipSelect">
+                <option value="false" selected>No</option>
+                <option value="true">Yes</option>
+            </select>
+        </div>
+        
+        <div class="control-group">
+            <label>Theme</label>
+            <select id="themeSelect"></select>
+        </div>
+
+        <input type="hidden" id="diffSelect" value="Variably_Difficult">
+
+        <button class="action-btn" onclick="runSolver()">Find Solutions</button>
+    </div>
+
+    <div id="statusMessage" class="status">Ready to solve.</div>
+    
+    <div class="viewer-container">
+        <button id="prevBtn" class="nav-arrow" onclick="changeSolution(-1)">&#8249;</button>
+        <div id="canvasContainer"></div>
+        <button id="nextBtn" class="nav-arrow" onclick="changeSolution(1)">&#8250;</button>
+    </div>
+    
+    <div id="counterText" class="counter-text">Solution 1 of X</div>
+
+<script>
+// ==========================================
+// 1. CONFIGURATION & THEMES
+// ==========================================
+
+const themes = {
+    'Forest':          {'1': '#39FF14', '2': '#3CB371', '3': '#006400'},
+    'Volcano':         {'1': '#FFD700', '2': '#FFA500', '3': '#8B0000'},
+    'Ocean':           {'1': '#87CEFA', '2': '#4169E1', '3': '#00008B'},
+    'Mountain':        {'1': '#FFFFFF', '2': '#A9A9A9', '3': '#2F4F4F'},
+    'Moon':            {'1': '#FFFFFF', '2': '#A9A9A9', '3': '#000000'},
+    'Desert':          {'1': '#FFD700', '2': '#D2B48C', '3': '#5C4033'},
+    'Reef':            {'1': '#40E0D0', '2': '#4169E1', '3': '#004B49'},
+    'Space':           {'1': '#4169E1', '2': '#9400D3', '3': '#000080'},
+    'Princess':        {'1': '#FFB6C1', '2': '#FF69B4', '3': '#FF1493'},
+    'Christmas':       {'1': '#FFFFFF', '2': '#3CB371', '3': '#8B0000'},
+    'English_Country': {'1': '#87CEFA', '2': '#FFD700', '3': '#006400'},
+    'Mardi_Gras':      {'1': '#FFD700', '2': '#3CB371', '3': '#800080'}, 
+    'Tropical':        {'1': '#32CD32', '2': '#FF1493', '3': '#40E0D0'},
+    'USA':             {'1': '#FF0000', '2': '#FFFFFF', '3': '#000080'},
+};
+
+const rainbowColors = ['#39FF14', '#3CB371', '#006400', '#FFD700', '#FFA500', '#8B0000', '#87CEFA', '#4169E1', '#00008B', '#800080'];
+
+const monthsList = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const mCoords = {};
+monthsList.forEach((m, i) => { mCoords[m] = i < 5 ? [i + 1, 0] : [i - 5, 1]; });
+
+const dCoords = {};
+let dCounter = 1;
+for (let r = 2; r < 6; r++) {
+    for (let c = 0; c < 7; c++) {
+        if (dCounter <= 28) dCoords[dCounter++] = [c, r];
+    }
+}
+dCoords[29] = [2, 6]; dCoords[30] = [3, 6]; dCoords[31] = [4, 6];
+
+document.addEventListener('DOMContentLoaded', () => {
+    try {
+        const mSel = document.getElementById('monthSelect');
+        monthsList.forEach(m => {
+            let opt = document.createElement('option');
+            opt.value = m; opt.text = m;
+            mSel.appendChild(opt);
+        });
+        mSel.value = "Jul";
+
+        const dSel = document.getElementById('daySelect');
+        for(let i=1; i<=31; i++) {
+            let opt = document.createElement('option');
+            opt.value = i; opt.text = i;
+            dSel.appendChild(opt);
+        }
+        dSel.value = "4";
+
+        const tSel = document.getElementById('themeSelect');
+        Object.keys(themes).forEach(t => {
+            let opt = document.createElement('option');
+            opt.value = t; opt.text = t.replace(/_/g, ' ');
+            tSel.appendChild(opt);
+        });
+        tSel.value = "Reef";
+    } catch (e) {
+        document.getElementById('statusMessage').innerText = "UI Error: " + e.message;
+        console.error(e);
+    }
+});
+
+let currentSolutions = [];
+let currentSolIndex = 0;
+let currentRenderData = {}; 
+let totalCalculated = 0;
+
+// ==========================================
+// 2. HELPER FUNCTIONS & RENDERING
+// ==========================================
+function getPieceColor(pName, pIdx, theme) {
+    if (theme === 'Rainbow') return rainbowColors[pIdx % rainbowColors.length];
+    const suffix = pName.split('_').pop();
+    return themes[theme][suffix] || '#FFFFFF';
+}
+
+function drawSolidPiece(ctx, cells, color, gap, size) {
+    ctx.fillStyle = color;
+    const hasCell = (cx, cy) => cells.some(c => c[0] === cx && c[1] === cy);
+    cells.forEach(([x, y]) => {
+        ctx.fillRect(x * size + gap, y * size + gap, size - gap * 2, size - gap * 2);
+        if (hasCell(x + 1, y)) ctx.fillRect(x * size + size - gap, y * size + gap, gap * 2, size - gap * 2);
+        if (hasCell(x, y + 1)) ctx.fillRect(x * size + gap, y * size + size - gap, size - gap * 2, gap * 2);
+        if (hasCell(x + 1, y) && hasCell(x, y + 1) && hasCell(x + 1, y + 1)) {
+            ctx.fillRect(x * size + size - gap, y * size + size - gap, gap * 2, gap * 2);
+        }
+    });
+}
+
+function renderCurrentSolution() {
+    const container = document.getElementById('canvasContainer');
+    container.innerHTML = ''; 
+    
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const size = 45; 
+    canvas.width = 7 * size; canvas.height = 7 * size;
+    
+    const solData = currentSolutions[currentSolIndex]; 
+    const { theme, inventory, mStr, dStr, mPos, dPos } = currentRenderData;
+
+    solData.forEach(pieceData => {
+        let pName = pieceData.piece;
+        let pIdx = inventory.indexOf(pName);
+        let color = getPieceColor(pName, pIdx, theme);
+        let cells = pieceData.cells;
+        
+        drawSolidPiece(ctx, cells, color, 3, size);
+        drawSolidPiece(ctx, cells, '#000000', 10, size); 
+    });
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.font = 'bold 18px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(mStr, mPos[0] * size + size/2, mPos[1] * size + size/2);
+    ctx.fillText(dStr, dPos[0] * size + size/2, dPos[1] * size + size/2);
+
+    container.appendChild(canvas);
+    document.getElementById('counterText').innerText = `Displaying ${currentSolIndex + 1} of ${currentSolutions.length} (Total Found: ${totalCalculated})`;
+}
+
+function changeSolution(direction) {
+    currentSolIndex += direction;
+    if (currentSolIndex < 0) currentSolIndex = currentSolutions.length - 1;
+    if (currentSolIndex >= currentSolutions.length) currentSolIndex = 0;
+    renderCurrentSolution();
+}
+
+// ==========================================
+// 3. API CALLER (Connects to Python)
+// ==========================================
+async function runSolver() {
+    const month = document.getElementById('monthSelect').value;
+    const day = parseInt(document.getElementById('daySelect').value);
+    const allowFlip = document.getElementById('flipSelect').value === "true";
+    const difficulty = document.getElementById('diffSelect').value;
+    const theme = document.getElementById('themeSelect').value;
+    
+    const statusMsg = document.getElementById('statusMessage');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const counterText = document.getElementById('counterText');
+    const container = document.getElementById('canvasContainer');
+    
+    container.innerHTML = '';
+    prevBtn.style.display = 'none'; nextBtn.style.display = 'none'; counterText.style.display = 'none';
+    statusMsg.innerText = "Connecting to secure server... (This may take a moment)";
+    
+    const mPos = mCoords[month]; 
+    const dPos = dCoords[day];
+    const voids = [`${mPos[0]},${mPos[1]}`, `${dPos[0]},${dPos[1]}`];
+
+	//local 
+    //const API_URL = "http://127.0.0.1:5000/solve"; 
+	//railway
+	const API_URL = "https://hoak-solver-backend-puzzle1.up.railway.app/solve";
+
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                voids: voids,
+                allowFlip: allowFlip,
+                difficulty: difficulty
+            })
+        });
+
+        if (!response.ok) throw new Error("Server error");
+        
+        const data = await response.json();
+        
+        totalCalculated = data.calcCount;
+        currentSolutions = data.solutions;
+
+        if (currentSolutions.length > 0) {
+            let msg = `Found ${totalCalculated} solutions in ${data.elapsed}s. `;
+            
+            // --- NEW CODE: Check for 1000+ calculations ---
+            if (totalCalculated >= 1000) {
+                msg += `(Note: The actual total could be much higher, sometimes as high as 3000!) `;
+            } else if (data.timedOut) {
+                msg += `(Search timed out). `;
+            }
+            // ----------------------------------------------
+
+            statusMsg.innerText = msg;
+            
+            currentSolIndex = 0;
+            currentRenderData = { theme, inventory: data.inventory, mStr: month, dStr: day, mPos, dPos };
+            
+            renderCurrentSolution();
+            
+            if (currentSolutions.length > 1) {
+                prevBtn.style.display = 'block';
+                nextBtn.style.display = 'block';
+                counterText.style.display = 'block';
+            }
+        } else {
+            statusMsg.innerText = `No solutions found for ${month} ${day}. Try enabling piece flipping!`;
+        }
+    } catch (error) {
+        statusMsg.innerText = `Error connecting to solver. Is the Python server running?`;
+        console.error(error);
+    }
+}
+</script>
+</body>
+</html>
