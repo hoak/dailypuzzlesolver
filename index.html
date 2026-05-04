@@ -223,7 +223,7 @@
     
     <div id="counterText" class="counter-text">Solution 1 of X</div>
     
-    <p class="flip-note">If you allow flipping of the asymmetric pieces, the possible solutions per day can number in the thousands.</p>
+    <p class="flip-note">If you allow flipping of pieces, the possible solutions per day are in the thousands.</p>
 
 <script>
 // ==========================================
@@ -262,13 +262,19 @@ dCoords[29] = [2, 6]; dCoords[30] = [3, 6]; dCoords[31] = [4, 6];
 
 document.addEventListener('DOMContentLoaded', () => {
     try {
+        // --- NEW CODE: Grab today's local date ---
+        const today = new Date();
+        const currentMonthStr = monthsList[today.getMonth()]; // Gets correct month abbreviation
+        const currentDayStr = today.getDate().toString();     // Gets correct day (1-31)
+        // -----------------------------------------
+
         const mSel = document.getElementById('monthSelect');
         monthsList.forEach(m => {
             let opt = document.createElement('option');
             opt.value = m; opt.text = m;
             mSel.appendChild(opt);
         });
-        mSel.value = "Jul";
+        mSel.value = currentMonthStr; // Set to today's month
 
         const dSel = document.getElementById('daySelect');
         for(let i=1; i<=31; i++) {
@@ -276,7 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
             opt.value = i; opt.text = i;
             dSel.appendChild(opt);
         }
-        dSel.value = "4";
+        dSel.value = currentDayStr; // Set to today's day
 
         const tSel = document.getElementById('themeSelect');
         Object.keys(themes).forEach(t => {
@@ -393,14 +399,8 @@ function changeSolution(direction) {
 // ==========================================
 async function runSolver() {
     const month = document.getElementById('monthSelect').value;
-    const day = parseInt(document.getElementById('daySelect').value);
-    
-    // Hardcoded to false to save server compute
-    const allowFlip = false; 
-    
-    const difficulty = document.getElementById('diffSelect').value;
-    const theme = document.getElementById('themeSelect').value;
-    
+    const day = parseInt(document.getElementById('daySelect').value);   
+    const theme = document.getElementById('themeSelect').value;    
     const statusMsg = document.getElementById('statusMessage');
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
@@ -422,9 +422,7 @@ async function runSolver() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                voids: voids,
-                allowFlip: allowFlip,
-                difficulty: difficulty
+                voids: voids               
             })
         });
 
