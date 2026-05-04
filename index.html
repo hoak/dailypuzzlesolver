@@ -168,6 +168,16 @@
             display: none; 
             text-align: center;
         }
+
+        .flip-note {
+            text-align: center;
+            color: #888;
+            font-size: 0.85rem;
+            max-width: 500px;
+            margin: 1rem auto 0 auto;
+            font-style: italic;
+            padding: 0 1rem;
+        }
         
         @media (max-width: 400px) {
             .nav-arrow { font-size: 3rem; }
@@ -192,14 +202,6 @@
             <select id="daySelect"></select>
         </div>
         
-        <div class="control-group">
-            <label>Flip</label>
-            <select id="flipSelect">
-                <option value="false" selected>No</option>
-                <option value="true">Yes</option>
-            </select>
-        </div>
-        
         <div class="theme-solve-group">
             <div class="control-group" style="flex-grow: 1;">
                 <label>Theme</label>
@@ -220,6 +222,8 @@
     </div>
     
     <div id="counterText" class="counter-text">Solution 1 of X</div>
+    
+    <p class="flip-note">If you allow flipping of the asymmetric pieces, the possible solutions per day can number in the thousands.</p>
 
 <script>
 // ==========================================
@@ -390,7 +394,10 @@ function changeSolution(direction) {
 async function runSolver() {
     const month = document.getElementById('monthSelect').value;
     const day = parseInt(document.getElementById('daySelect').value);
-    const allowFlip = document.getElementById('flipSelect').value === "true";
+    
+    // Hardcoded to false to save server compute
+    const allowFlip = false; 
+    
     const difficulty = document.getElementById('diffSelect').value;
     const theme = document.getElementById('themeSelect').value;
     
@@ -450,7 +457,7 @@ async function runSolver() {
                 counterText.style.display = 'block';
             }
         } else {
-            statusMsg.innerText = `No solutions found for ${month} ${day}. Try enabling piece flipping!`;
+            statusMsg.innerText = `No solutions found for ${month} ${day}. Try adjusting your puzzle settings!`;
         }
     } catch (error) {
         statusMsg.innerText = `Error connecting to solver. Is the Python server running?`;
