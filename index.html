@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Calendar Puzzle</title>
+    <title>The Daily Calendar Puzzle</title>
     <style>
         :root {
             --bg: #121212;
@@ -58,7 +58,7 @@
             margin-bottom: 1.5rem;
             border: 1px solid var(--border);
             width: 100%;
-            max-width: 600px;
+            max-width: 400px;
             box-sizing: border-box;
         }
         .control-group {
@@ -66,14 +66,6 @@
             flex-direction: column;
             gap: 0.2rem;
             flex: 1 1 auto; 
-            min-width: 70px;
-        }
-        .theme-solve-group {
-            display: flex;
-            gap: 0.75rem;
-            align-items: flex-end;
-            flex: 2 1 100%; 
-            min-width: 200px;
         }
         .control-group label {
             font-size: 0.75rem;
@@ -103,9 +95,10 @@
             border: none;
             border-radius: 4px;
             white-space: nowrap;
-            width: auto; 
-            padding: 0.6rem 1.5rem; 
+            width: 100%; 
+            padding: 0.8rem; 
             cursor: pointer;
+            margin-top: 0.5rem;
         }
         button.action-btn:hover {
             opacity: 0.8;
@@ -118,6 +111,7 @@
             text-align: center;
             min-height: 1.5rem;
             padding: 0 1rem;
+            color: var(--accent);
         }
         
         .viewer-container {
@@ -168,15 +162,13 @@
             display: none; 
             text-align: center;
         }
-
-        .flip-note {
+        
+        .total-note {
             text-align: center;
-            color: #888;
-            font-size: 0.85rem;
-            max-width: 500px;
-            margin: 1rem auto 0 auto;
-            font-style: italic;
-            padding: 0 1rem;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--accent);
+            margin-top: 0.5rem;
         }
         
         @media (max-width: 400px) {
@@ -188,32 +180,18 @@
 </head>
 <body>
 
-    <h1>Daily Calendar Puzzle<br>From HOAK Puzzles</h1>
+    <h1>The Daily Calendar Puzzle</h1>
     <p class="subtitle">Get your own Puzzle at <a href="https://www.etsy.com/listing/4498458862" target="_blank">https://www.etsy.com/listing/4498458862</a></p>
     
     <div class="controls">
         <div class="control-group">
-            <label>Month</label>
-            <select id="monthSelect"></select>
+            <label>Theme Selection</label>
+            <select id="themeSelect"></select>
         </div>
-        
-        <div class="control-group">
-            <label>Day</label>
-            <select id="daySelect"></select>
-        </div>
-        
-        <div class="theme-solve-group">
-            <div class="control-group" style="flex-grow: 1;">
-                <label>Theme</label>
-                <select id="themeSelect"></select>
-            </div>
-            <button class="action-btn" onclick="runSolver()">Solve</button>
-        </div>
-
-        <input type="hidden" id="diffSelect" value="Variably_Difficult">
+        <button class="action-btn" onclick="runSolver()">Show Today's Solutions</button>
     </div>
 
-    <div id="statusMessage" class="status">Ready to solve.</div>
+    <div id="statusMessage" class="status"></div>
     
     <div id="swipeArea" class="viewer-container">
         <button id="prevBtn" class="nav-arrow" onclick="changeSolution(-1)">&#8249;</button>
@@ -222,14 +200,12 @@
     </div>
     
     <div id="counterText" class="counter-text">Solution 1 of X</div>
-    
-    <p class="flip-note">If you allow flipping of pieces, the possible solutions per day are in the thousands.</p>
+    <div id="totalSolutionsText" class="total-note"></div>
 
 <script>
 // ==========================================
 // 1. CONFIGURATION & THEMES
 // ==========================================
-
 const themes = {
     'Forest':          {'1': '#39FF14', '2': '#3CB371', '3': '#006400'},
     'Volcano':         {'1': '#FFD700', '2': '#FFA500', '3': '#8B0000'},
@@ -260,29 +236,14 @@ for (let r = 2; r < 6; r++) {
 }
 dCoords[29] = [2, 6]; dCoords[30] = [3, 6]; dCoords[31] = [4, 6];
 
+let todayMonthStr = "Jan";
+let todayDayStr = "1";
+
 document.addEventListener('DOMContentLoaded', () => {
     try {
-        // --- NEW CODE: Grab today's local date ---
         const today = new Date();
-        const currentMonthStr = monthsList[today.getMonth()]; // Gets correct month abbreviation
-        const currentDayStr = today.getDate().toString();     // Gets correct day (1-31)
-        // -----------------------------------------
-
-        const mSel = document.getElementById('monthSelect');
-        monthsList.forEach(m => {
-            let opt = document.createElement('option');
-            opt.value = m; opt.text = m;
-            mSel.appendChild(opt);
-        });
-        mSel.value = currentMonthStr; // Set to today's month
-
-        const dSel = document.getElementById('daySelect');
-        for(let i=1; i<=31; i++) {
-            let opt = document.createElement('option');
-            opt.value = i; opt.text = i;
-            dSel.appendChild(opt);
-        }
-        dSel.value = currentDayStr; // Set to today's day
+        todayMonthStr = monthsList[today.getMonth()]; 
+        todayDayStr = today.getDate().toString();     
 
         const tSel = document.getElementById('themeSelect');
         Object.keys(themes).forEach(t => {
@@ -293,6 +254,8 @@ document.addEventListener('DOMContentLoaded', () => {
         tSel.value = "Reef";
         
         setupSwipeDetection(); 
+        
+        document.getElementById('statusMessage').innerText = `Ready for today's puzzle (${todayMonthStr} ${todayDayStr})`;
     } catch (e) {
         document.getElementById('statusMessage').innerText = "UI Error: " + e.message;
         console.error(e);
@@ -302,11 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
 let currentSolutions = [];
 let currentSolIndex = 0;
 let currentRenderData = {}; 
-let totalCalculated = 0;
 
-// ==========================================
-// 1.5 MOBILE SWIPE DETECTION
-// ==========================================
 function setupSwipeDetection() {
     const swipeArea = document.getElementById('swipeArea');
     let touchStartX = 0;
@@ -323,22 +282,13 @@ function setupSwipeDetection() {
 
     function handleSwipe() {
         if (currentSolutions.length <= 1) return; 
-        
         const swipeThreshold = 50; 
-        if (touchEndX < touchStartX - swipeThreshold) {
-            changeSolution(1);
-        }
-        if (touchEndX > touchStartX + swipeThreshold) {
-            changeSolution(-1);
-        }
+        if (touchEndX < touchStartX - swipeThreshold) changeSolution(1);
+        if (touchEndX > touchStartX + swipeThreshold) changeSolution(-1);
     }
 }
 
-// ==========================================
-// 2. HELPER FUNCTIONS & RENDERING
-// ==========================================
-function getPieceColor(pName, pIdx, theme) {
-    if (theme === 'Rainbow') return rainbowColors[pIdx % rainbowColors.length];
+function getPieceColor(pName, theme) {
     const suffix = pName.split('_').pop();
     return themes[theme][suffix] || '#FFFFFF';
 }
@@ -366,12 +316,11 @@ function renderCurrentSolution() {
     canvas.width = 7 * size; canvas.height = 7 * size;
     
     const solData = currentSolutions[currentSolIndex]; 
-    const { theme, inventory, mStr, dStr, mPos, dPos } = currentRenderData;
+    const { theme, mStr, dStr, mPos, dPos } = currentRenderData;
 
     solData.forEach(pieceData => {
         let pName = pieceData.piece;
-        let pIdx = inventory.indexOf(pName);
-        let color = getPieceColor(pName, pIdx, theme);
+        let color = getPieceColor(pName, theme);
         let cells = pieceData.cells;
         
         drawSolidPiece(ctx, cells, color, 3, size);
@@ -379,12 +328,12 @@ function renderCurrentSolution() {
     });
 
     ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-    ctx.font = 'bold 18px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(mStr, mPos[0] * size + size/2, mPos[1] * size + size/2);
     ctx.fillText(dStr, dPos[0] * size + size/2, dPos[1] * size + size/2);
 
     container.appendChild(canvas);
-    document.getElementById('counterText').innerText = `Displaying ${currentSolIndex + 1} of ${currentSolutions.length} (Total Found: ${totalCalculated})`;
+    document.getElementById('counterText').innerText = `Showing Solution ${currentSolIndex + 1} of ${currentSolutions.length}`;
 }
 
 function changeSolution(direction) {
@@ -395,57 +344,47 @@ function changeSolution(direction) {
 }
 
 // ==========================================
-// 3. API CALLER (Connects to Python)
+// 3. API CALLER (Fetches local JSON)
 // ==========================================
 async function runSolver() {
-    const month = document.getElementById('monthSelect').value;
-    const day = parseInt(document.getElementById('daySelect').value);   
     const theme = document.getElementById('themeSelect').value;    
     const statusMsg = document.getElementById('statusMessage');
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
     const counterText = document.getElementById('counterText');
     const container = document.getElementById('canvasContainer');
+    const totalText = document.getElementById('totalSolutionsText');
     
     container.innerHTML = '';
+    totalText.innerText = ''; 
     prevBtn.style.display = 'none'; nextBtn.style.display = 'none'; counterText.style.display = 'none';
-    statusMsg.innerText = "Connecting to secure server... (This may take a moment)";
+    statusMsg.innerText = "Retrieving today's solutions...";
     
-    const mPos = mCoords[month]; 
-    const dPos = dCoords[day];
-    const voids = [`${mPos[0]},${mPos[1]}`, `${dPos[0]},${dPos[1]}`];
+    const mPos = mCoords[todayMonthStr]; 
+    const dPos = dCoords[todayDayStr];
 
-    const API_URL = "https://hoak-solver-backend-puzzle1.up.railway.app/solve"; 
+    // Grabs the static JSON file based on the local date
+    const fileName = `solutions/${todayMonthStr}-${todayDayStr}.json`; 
 
     try {
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                voids: voids               
-            })
-        });
+        const response = await fetch(fileName);
 
-        if (!response.ok) throw new Error("Server error");
+        if (!response.ok) {
+            throw new Error(`Could not find puzzle data for ${todayMonthStr} ${todayDayStr}.`);
+        }
         
         const data = await response.json();
         
-        totalCalculated = data.calcCount;
-        currentSolutions = data.solutions;
+        currentSolutions = data.solutions; 
+        const totalCalculated = data.calcCount; 
 
         if (currentSolutions.length > 0) {
-            let msg = `Found ${totalCalculated} solutions in ${data.elapsed}s. `;
+            statusMsg.innerText = `Found daily solutions for ${todayMonthStr} ${todayDayStr}!`;
             
-            if (totalCalculated >= 1000) {
-                msg += `(Note: The actual total could be as high as 3000!) `;
-            } else if (data.timedOut) {
-                msg += `(Search timed out). `;
-            }
-            
-            statusMsg.innerText = msg;
+            totalText.innerText = `${totalCalculated} possible solutions for ${todayMonthStr} ${todayDayStr}`;
             
             currentSolIndex = 0;
-            currentRenderData = { theme, inventory: data.inventory, mStr: month, dStr: day, mPos, dPos };
+            currentRenderData = { theme, mStr: todayMonthStr, dStr: todayDayStr, mPos, dPos };
             
             renderCurrentSolution();
             
@@ -455,10 +394,10 @@ async function runSolver() {
                 counterText.style.display = 'block';
             }
         } else {
-            statusMsg.innerText = `No solutions found for ${month} ${day}. Try adjusting your puzzle settings!`;
+            statusMsg.innerText = `No solutions recorded for ${todayMonthStr} ${todayDayStr}.`;
         }
     } catch (error) {
-        statusMsg.innerText = `Error connecting to solver. Is the Python server running?`;
+        statusMsg.innerText = error.message;
         console.error(error);
     }
 }
