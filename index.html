@@ -317,9 +317,8 @@ function renderCurrentSolution() {
     const solData = currentSolutions[currentSolIndex]; 
     const { theme, mStr, dStr, mPos, dPos } = currentRenderData;
 
-    // --- NEW: Draw the two 1x1 square marker pieces ---
-    // Using a dark gray so they match the piece styling but stand out from the black background
-    const squareColor = '#444444'; 
+    // Draw the two 1x1 square marker pieces in dark subtle gray
+    const squareColor = '#252525'; 
     
     // Draw Month Square
     drawSolidPiece(ctx, [mPos], squareColor, 3, size);
@@ -328,7 +327,6 @@ function renderCurrentSolution() {
     // Draw Day Square
     drawSolidPiece(ctx, [dPos], squareColor, 3, size);
     drawSolidPiece(ctx, [dPos], '#000000', 10, size); 
-    // --------------------------------------------------
 
     // Draw the rest of the puzzle pieces from the JSON
     solData.forEach(pieceData => {
@@ -340,16 +338,22 @@ function renderCurrentSolution() {
         drawSolidPiece(ctx, cells, '#000000', 10, size); 
     });
 
-    // Draw the white text clearly on top of the dark gray squares
+    // Draw the white text with adjusted sizes for both Month and Day
     ctx.fillStyle = 'rgba(255, 255, 255, 0.95)'; 
-    ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.textAlign = 'center'; 
+    ctx.textBaseline = 'middle';
+    
+    // Month font size
+    ctx.font = 'bold 14px Arial'; 
     ctx.fillText(mStr, mPos[0] * size + size/2, mPos[1] * size + size/2);
+    
+    // Day font size - Reduced so it fits perfectly inside the inner square
+    ctx.font = 'bold 16px Arial'; 
     ctx.fillText(dStr, dPos[0] * size + size/2, dPos[1] * size + size/2);
 
     container.appendChild(canvas);
     document.getElementById('counterText').innerText = `Showing Solution ${currentSolIndex + 1} of ${currentSolutions.length}`;
-}	
-
+}
 // function renderCurrentSolution() {
 //     const container = document.getElementById('canvasContainer');
 //     container.innerHTML = ''; 
