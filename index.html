@@ -183,27 +183,43 @@
     <h1>HOAK Daily Calendar Puzzle</h1>
     <p class="subtitle">Get your own Puzzle at <a href="https://www.etsy.com/listing/4498458862" target="_blank">https://www.etsy.com/listing/4498458862</a></p>
     
-    <div class="controls">
-        <div class="control-group">
-            <label>Theme Selection</label>
-            <select id="themeSelect"></select>
-        </div>
-        <button class="action-btn" onclick="runSolver()">Show Today's Solutions</button>
-    </div>
+	<div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 1rem;">
+    	<select id="themeSelect" style="padding: 0.5rem; font-size: 16px; border-radius: 5px; cursor: pointer;">
+        <option value="Forest">Forest</option>
+        <option value="Volcano">Volcano</option>
+        <option value="Lagoon">Lagoon</option>
+        <option value="Moon">Moon</option>
+        <option value="Desert">Desert</option>
+        <option value="Reef">Reef</option>
+        <option value="Fire">Fire</option>
+        <option value="Space">Space</option>
+        <option value="Princess">Princess</option>
+        <option value="Christmas">Christmas</option>
+        <option value="Country">Country</option>
+        <option value="Mardi_Gras">Mardi Gras</option>
+        <option value="USA">USA</option>
+   	 </select>
+
+    	<button onclick="loadSolutions()" style="padding: 0.5rem 1.5rem; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 5px; background-color: #2d67b3; color: white; border: none;">
+       	 Show
+   		 </button>
+	</div>
 
     <div id="statusMessage" class="status"></div>
     
     <div id="swipeArea" class="viewer-container">
         <button id="prevBtn" class="nav-arrow" onclick="changeSolution(-1)">&#8249;</button>
 		<div id="sliderContainer" style="display: none; max-width: 400px; margin: 1rem auto; text-align: center;">
-    		<label for="pieceSlider" style="color: #fff; font-family: Arial; font-size: 16px; font-weight: bold;">
-        		Pieces Shown: <span id="pieceCountDisplay">14</span>
-    		</label><br>
-   		 	<input type="range" id="pieceSlider" min="1" max="14" value="14" style="width: 100%; margin-top: 0.8rem; cursor: pointer;" oninput="updatePieceCount()">
+   			 <label for="pieceSlider" style="color: #fff; font-family: Arial; font-size: 16px; font-weight: bold;">
+	      	 	 Pieces Shown: <span id="pieceCountDisplay">1</span>
+   	 		</label><br>
+    
+    		<input type="range" id="pieceSlider" min="1" max="14" value="1" style="width: 100%; margin-top: 0.8rem; cursor: pointer;" oninput="updatePieceCount()">
 		</div>
-        <div id="canvasContainer"></div>
-        <button id="nextBtn" class="nav-arrow" onclick="changeSolution(1)">&#8250;</button>
-    </div>
+
+		<div id="canvasContainer" style="display: flex; justify-content: center; margin-bottom: 1rem;"></div>
+       	 <button id="nextBtn" class="nav-arrow" onclick="changeSolution(1)">&#8250;</button>
+    	</div>
     
     <div id="counterText" class="counter-text">Solution 1 of X</div>
     <div id="totalSolutionsText" class="total-note"></div>
