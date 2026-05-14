@@ -183,43 +183,25 @@
     <h1>HOAK Daily Calendar Puzzle</h1>
     <p class="subtitle">Get your own Puzzle at <a href="https://www.etsy.com/listing/4498458862" target="_blank">https://www.etsy.com/listing/4498458862</a></p>
     
-	<div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 1rem;">
-    	<select id="themeSelect" style="padding: 0.5rem; font-size: 16px; border-radius: 5px; cursor: pointer;">
-        <option value="Forest">Forest</option>
-        <option value="Volcano">Volcano</option>
-        <option value="Lagoon">Lagoon</option>
-        <option value="Moon">Moon</option>
-        <option value="Desert">Desert</option>
-        <option value="Reef">Reef</option>
-        <option value="Fire">Fire</option>
-        <option value="Space">Space</option>
-        <option value="Princess">Princess</option>
-        <option value="Christmas">Christmas</option>
-        <option value="Country">Country</option>
-        <option value="Mardi_Gras">Mardi Gras</option>
-        <option value="USA">USA</option>
-   	 </select>
-
-    	<button onclick="runSolver()" style="padding: 0.5rem 1.5rem; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 5px; background-color: #2d67b3; color: white; border: none;">
-        Show
-    </button>
-	</div>
+    <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 1rem;">
+        <select id="themeSelect" onchange="changeTheme()" style="padding: 0.5rem; font-size: 16px; border-radius: 5px; cursor: pointer;">
+            </select>
+    </div>
 
     <div id="statusMessage" class="status"></div>
     
+    <div id="sliderContainer" style="display: none; width: 100%; max-width: 400px; margin: 0 auto 1rem auto; text-align: center;">
+         <label for="pieceSlider" style="color: #fff; font-family: Arial; font-size: 16px; font-weight: bold;">
+             Pieces Shown: <span id="pieceCountDisplay">1</span>
+        </label><br>
+        <input type="range" id="pieceSlider" min="1" max="14" value="1" style="width: 100%; margin-top: 0.8rem; cursor: pointer;" oninput="updatePieceCount()">
+    </div>
+
     <div id="swipeArea" class="viewer-container">
         <button id="prevBtn" class="nav-arrow" onclick="changeSolution(-1)">&#8249;</button>
-		<div id="sliderContainer" style="display: none; max-width: 400px; margin: 1rem auto; text-align: center;">
-   			 <label for="pieceSlider" style="color: #fff; font-family: Arial; font-size: 16px; font-weight: bold;">
-	      	 	 Pieces Shown: <span id="pieceCountDisplay">1</span>
-   	 		</label><br>
-    
-    		<input type="range" id="pieceSlider" min="1" max="14" value="1" style="width: 100%; margin-top: 0.8rem; cursor: pointer;" oninput="updatePieceCount()">
-		</div>
-
-		<div id="canvasContainer" style="display: flex; justify-content: center; margin-bottom: 1rem;"></div>
-       	 <button id="nextBtn" class="nav-arrow" onclick="changeSolution(1)">&#8250;</button>
-    	</div>
+        <div id="canvasContainer" style="display: flex; justify-content: center; margin-bottom: 1rem;"></div>
+        <button id="nextBtn" class="nav-arrow" onclick="changeSolution(1)">&#8250;</button>
+    </div>
     
     <div id="counterText" class="counter-text">Solution 1 of X</div>
     <div id="totalSolutionsText" class="total-note"></div>
@@ -231,15 +213,15 @@
 const themes = {
     'Forest':          {'1': '#39FF14', '2': '#018f44', '3': '#014531'},
     'Volcano':         {'1': '#e3c72d', '2': '#6b010c', '3': '#1e211f'},
-    'Lagoon':           {'1': '#9bd2f2', '2': '#3a69e0', '3': '#329fb3'},   
+    'Lagoon':          {'1': '#9bd2f2', '2': '#3a69e0', '3': '#329fb3'},   
     'Moon':            {'1': '#FFFFFF', '2': '#A9A9A9', '3': '#0a0a0a'},
     'Desert':          {'1': '#FFD700', '2': '#D2B48C', '3': '#5C4033'},
     'Reef':            {'1': '#329fb3', '2': '#2d67b3', '3': '#014531'},    
-	'Fire':            {'1': '#d9362e', '2': '#ba0d0d', '3': '#6b010c'},
-     'Space':           {'1': '#000080', '2': '#450d57', '3': '#00002b'},
+    'Fire':            {'1': '#d9362e', '2': '#ba0d0d', '3': '#6b010c'},
+    'Space':           {'1': '#000080', '2': '#450d57', '3': '#00002b'},
     'Princess':        {'1': '#FFFFFF', '2': '#450d57', '3': '#db84d4'}, 
-    'Christmas':    	{'1': '#ffffff', '2': '#018f44', '3': '#6b010c'},     
-    'Country': 			{'1': '#9bd2f2', '2': '#dbba04', '3': '#014531'},
+    'Christmas':       {'1': '#ffffff', '2': '#018f44', '3': '#6b010c'},     
+    'Country':         {'1': '#9bd2f2', '2': '#dbba04', '3': '#014531'},
     'Mardi_Gras':      {'1': '#e3c72d', '2': '#450d57', '3': '#018f44'},
     'USA':             {'1': '#FFFFFF', '2': '#FF0000', '3': '#000080'}    
 };
@@ -276,7 +258,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         setupSwipeDetection(); 
         
-        document.getElementById('statusMessage').innerText = `Ready for today's puzzle (${todayMonthStr} ${todayDayStr})`;
+        // Auto-load solutions on page load
+        runSolver();
     } catch (e) {
         document.getElementById('statusMessage').innerText = "UI Error: " + e.message;
         console.error(e);
@@ -336,7 +319,17 @@ function updatePieceCount() {
         renderCurrentSolution();
     }
 }
-	
+
+function changeTheme() {
+    const newTheme = document.getElementById('themeSelect').value;
+    if (currentRenderData) {
+        currentRenderData.theme = newTheme;
+    }
+    // Only re-draw if we already have solutions loaded
+    if (currentSolutions && currentSolutions.length > 0) {
+        renderCurrentSolution();
+    }
+}
 
 function renderCurrentSolution() {
     const container = document.getElementById('canvasContainer');
@@ -365,7 +358,7 @@ function renderCurrentSolution() {
     drawSolidPiece(ctx, [dPos], squareColor, 3, size);
     drawSolidPiece(ctx, [dPos], '#000000', 10, size); 
 
-    // --- NEW: Draw ONLY the number of puzzle pieces dictated by the slider ---
+    // Draw ONLY the number of puzzle pieces dictated by the slider
     solData.slice(0, piecesToShow).forEach(pieceData => {
         let pName = pieceData.piece;
         let color = getPieceColor(pName, theme);
@@ -408,8 +401,6 @@ function changeSolution(direction) {
 // ==========================================
 // 3. API CALLER (Fetches local JSON)
 // ==========================================
-
-
 async function runSolver() {
     const theme = document.getElementById('themeSelect').value;    
     const statusMsg = document.getElementById('statusMessage');
@@ -419,15 +410,6 @@ async function runSolver() {
     const container = document.getElementById('canvasContainer');
     const totalText = document.getElementById('totalSolutionsText');
     
-    // --- NEW: Reset the slider to 1 piece whenever "Show" is clicked ---
-    const slider = document.getElementById('pieceSlider');
-    const pieceDisplay = document.getElementById('pieceCountDisplay');
-    if (slider && pieceDisplay) {
-        slider.value = 1;
-        pieceDisplay.innerText = '1';
-    }
-    // -------------------------------------------------------------------
-
     container.innerHTML = '';
     totalText.innerText = ''; 
     prevBtn.style.display = 'none'; nextBtn.style.display = 'none'; counterText.style.display = 'none';
@@ -474,12 +456,10 @@ async function runSolver() {
         console.error(error);
     }
 }
-
-	
 </script>
 <div style="max-width: 600px; margin: 2rem auto 1rem auto; text-align: center; color: #777; font-size: 0.75rem; line-height: 1.5; padding: 1.5rem 1rem 0 1rem; border-top: 1px solid var(--border);">
         <p style="margin-bottom: 0.4rem;"><strong>© 2026 Cherry Hill Technology, LLC. All rights reserved.</strong></p>
         <p style="margin-top: 0;">The piece geometry combination, artwork, color themes, geometric solution layouts, and the visual presentation of the digital solver are the intellectual property of Cherry Hill Technology, LLC. "HOAK" is a trademark. Unauthorized reproduction, duplication, distribution, or resale is strictly prohibited.</p>
-    </div>
+    </div>	
 </body>
 </html>
