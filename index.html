@@ -195,6 +195,12 @@
     
     <div id="swipeArea" class="viewer-container">
         <button id="prevBtn" class="nav-arrow" onclick="changeSolution(-1)">&#8249;</button>
+		<div id="sliderContainer" style="display: none; max-width: 400px; margin: 1rem auto; text-align: center;">
+    		<label for="pieceSlider" style="color: #fff; font-family: Arial; font-size: 16px; font-weight: bold;">
+        		Pieces Shown: <span id="pieceCountDisplay">14</span>
+    		</label><br>
+   		 	<input type="range" id="pieceSlider" min="1" max="14" value="14" style="width: 100%; margin-top: 0.8rem; cursor: pointer;" oninput="updatePieceCount()">
+		</div>
         <div id="canvasContainer"></div>
         <button id="nextBtn" class="nav-arrow" onclick="changeSolution(1)">&#8250;</button>
     </div>
@@ -305,6 +311,17 @@ function drawSolidPiece(ctx, cells, color, gap, size) {
     });
 }
 
+function updatePieceCount() {
+    const sliderValue = document.getElementById('pieceSlider').value;
+    document.getElementById('pieceCountDisplay').innerText = sliderValue;
+    
+    // Only re-render if a solution is currently loaded
+    if (currentSolutions && currentSolutions.length > 0) {
+        renderCurrentSolution();
+    }
+}
+	
+
 function renderCurrentSolution() {
     const container = document.getElementById('canvasContainer');
     container.innerHTML = ''; 
@@ -317,6 +334,10 @@ function renderCurrentSolution() {
     const solData = currentSolutions[currentSolIndex]; 
     const { theme, mStr, dStr, mPos, dPos } = currentRenderData;
 
+    // Get the current slider value
+    const slider = document.getElementById('pieceSlider');
+    const piecesToShow = slider ? parseInt(slider.value) : 14;
+
     // Draw the two 1x1 square marker pieces in dark subtle gray
     const squareColor = '#252525'; 
     
@@ -328,8 +349,8 @@ function renderCurrentSolution() {
     drawSolidPiece(ctx, [dPos], squareColor, 3, size);
     drawSolidPiece(ctx, [dPos], '#000000', 10, size); 
 
-    // Draw the rest of the puzzle pieces from the JSON
-    solData.forEach(pieceData => {
+    // --- NEW: Draw ONLY the number of puzzle pieces dictated by the slider ---
+    solData.slice(0, piecesToShow).forEach(pieceData => {
         let pName = pieceData.piece;
         let color = getPieceColor(pName, theme);
         let cells = pieceData.cells;
@@ -347,42 +368,19 @@ function renderCurrentSolution() {
     ctx.font = 'bold 14px Arial'; 
     ctx.fillText(mStr, mPos[0] * size + size/2, mPos[1] * size + size/2);
     
-    // Day font size - Reduced so it fits perfectly inside the inner square
+    // Day font size 
     ctx.font = 'bold 16px Arial'; 
     ctx.fillText(dStr, dPos[0] * size + size/2, dPos[1] * size + size/2);
 
     container.appendChild(canvas);
     document.getElementById('counterText').innerText = `Showing Solution ${currentSolIndex + 1} of ${currentSolutions.length}`;
+    
+    // Make sure the slider becomes visible now that a solution is showing
+    const sliderContainer = document.getElementById('sliderContainer');
+    if (sliderContainer) {
+        sliderContainer.style.display = 'block';
+    }
 }
-// function renderCurrentSolution() {
-//     const container = document.getElementById('canvasContainer');
-//     container.innerHTML = ''; 
-    
-//     const canvas = document.createElement('canvas');
-//     const ctx = canvas.getContext('2d');
-//     const size = 45; 
-//     canvas.width = 7 * size; canvas.height = 7 * size;
-    
-//     const solData = currentSolutions[currentSolIndex]; 
-//     const { theme, mStr, dStr, mPos, dPos } = currentRenderData;
-
-//     solData.forEach(pieceData => {
-//         let pName = pieceData.piece;
-//         let color = getPieceColor(pName, theme);
-//         let cells = pieceData.cells;
-        
-//         drawSolidPiece(ctx, cells, color, 3, size);
-//         drawSolidPiece(ctx, cells, '#000000', 10, size); 
-//     });
-
-//     ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-//     ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-//     ctx.fillText(mStr, mPos[0] * size + size/2, mPos[1] * size + size/2);
-//     ctx.fillText(dStr, dPos[0] * size + size/2, dPos[1] * size + size/2);
-
-//     container.appendChild(canvas);
-//     document.getElementById('counterText').innerText = `Showing Solution ${currentSolIndex + 1} of ${currentSolutions.length}`;
-// }
 
 function changeSolution(direction) {
     currentSolIndex += direction;
