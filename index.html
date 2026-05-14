@@ -200,9 +200,9 @@
         <option value="USA">USA</option>
    	 </select>
 
-    	<button onclick="loadSolutions()" style="padding: 0.5rem 1.5rem; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 5px; background-color: #2d67b3; color: white; border: none;">
-       	 Show
-   		 </button>
+    	<button onclick="runSolver()" style="padding: 0.5rem 1.5rem; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 5px; background-color: #2d67b3; color: white; border: none;">
+        Show
+    </button>
 	</div>
 
     <div id="statusMessage" class="status"></div>
@@ -408,6 +408,8 @@ function changeSolution(direction) {
 // ==========================================
 // 3. API CALLER (Fetches local JSON)
 // ==========================================
+
+
 async function runSolver() {
     const theme = document.getElementById('themeSelect').value;    
     const statusMsg = document.getElementById('statusMessage');
@@ -417,6 +419,15 @@ async function runSolver() {
     const container = document.getElementById('canvasContainer');
     const totalText = document.getElementById('totalSolutionsText');
     
+    // --- NEW: Reset the slider to 1 piece whenever "Show" is clicked ---
+    const slider = document.getElementById('pieceSlider');
+    const pieceDisplay = document.getElementById('pieceCountDisplay');
+    if (slider && pieceDisplay) {
+        slider.value = 1;
+        pieceDisplay.innerText = '1';
+    }
+    // -------------------------------------------------------------------
+
     container.innerHTML = '';
     totalText.innerText = ''; 
     prevBtn.style.display = 'none'; nextBtn.style.display = 'none'; counterText.style.display = 'none';
@@ -463,10 +474,12 @@ async function runSolver() {
         console.error(error);
     }
 }
+
+	
 </script>
 <div style="max-width: 600px; margin: 2rem auto 1rem auto; text-align: center; color: #777; font-size: 0.75rem; line-height: 1.5; padding: 1.5rem 1rem 0 1rem; border-top: 1px solid var(--border);">
-        <p style="margin-bottom: 0.4rem;"><strong>© 2026 HOAK. All rights reserved.</strong></p>
+        <p style="margin-bottom: 0.4rem;"><strong>© 2026 Cherry Hill Technology, LLC. All rights reserved.</strong></p>
         <p style="margin-top: 0;">The piece geometry combination, artwork, color themes, geometric solution layouts, and the visual presentation of the digital solver are the intellectual property of Cherry Hill Technology, LLC. "HOAK" is a trademark. Unauthorized reproduction, duplication, distribution, or resale is strictly prohibited.</p>
-    </div>	
+    </div>
 </body>
 </html>
