@@ -232,7 +232,7 @@ const themes = {
     'Christmas':       {'1': '#ffffff', '2': '#018f44', '3': '#6b010c'},     
     'Country':         {'1': '#9bd2f2', '2': '#dbba04', '3': '#014531'},
     'Mardi_Gras':      {'1': '#e3c72d', '2': '#450d57', '3': '#018f44'},
-    '4th of July':     {'1': '#FFFFFF', '2': '#FF0000', '3': '#000080'}    
+    '4th_of_July':     {'1': '#FFFFFF', '2': '#FF0000', '3': '#000080'}    
 };
 
 const monthsList = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -260,7 +260,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const tSel = document.getElementById('themeSelect');
         Object.keys(themes).forEach(t => {
             let opt = document.createElement('option');
-            opt.value = t; opt.text = t.replace(/_/g, ' ');
+            opt.value = t; 
+            opt.text = t.replace(/_/g, ' '); // Replaces underscores with spaces cleanly
             tSel.appendChild(opt);
         });
         tSel.value = "Reef";
@@ -278,6 +279,7 @@ document.addEventListener('DOMContentLoaded', () => {
 let currentSolutions = [];
 let currentSolIndex = 0;
 let currentRenderData = {}; 
+let animationId = null; // Used to track and cancel the fade animation
 
 function setupSwipeDetection() {
     const swipeArea = document.getElementById('swipeArea');
@@ -323,9 +325,10 @@ function updatePieceCount() {
     const sliderValue = document.getElementById('pieceSlider').value;
     document.getElementById('pieceCountDisplay').innerText = sliderValue;
     
-    // Only re-render if a solution is currently loaded
+    // Snap to user's slider choice and cancel any ongoing fade
+    if (animationId) cancelAnimationFrame(animationId);
     if (currentSolutions && currentSolutions.length > 0) {
-        renderCurrentSolution();
+        renderCurrentSolution(0);
     }
 }
 
@@ -334,29 +337,36 @@ function changeTheme() {
     if (currentRenderData) {
         currentRenderData.theme = newTheme;
     }
-    // Only re-draw if we already have solutions loaded
+    
+    if (animationId) cancelAnimationFrame(animationId);
     if (currentSolutions && currentSolutions.length > 0) {
-        renderCurrentSolution();
+        renderCurrentSolution(0);
     }
 }
 
-function renderCurrentSolution() {
+// Rewritten to reuse the same canvas and accept an extraAlpha for fading pieces
+function renderCurrentSolution(extraAlpha = 0) {
     const container = document.getElementById('canvasContainer');
-    container.innerHTML = ''; 
     
-    const canvas = document.createElement('canvas');
+    // Grab the existing canvas, or create it if it doesn't exist yet
+    let canvas = container.querySelector('canvas');
+    if (!canvas) {
+        canvas = document.createElement('canvas');
+        container.innerHTML = ''; // Clear loading text
+        container.appendChild(canvas);
+    }
+    
     const ctx = canvas.getContext('2d');
     const size = 45; 
-    canvas.width = 7 * size; canvas.height = 7 * size;
+    canvas.width = 7 * size; 
+    canvas.height = 7 * size; // Setting dimensions clears the canvas for the new frame
     
     const solData = currentSolutions[currentSolIndex]; 
     const { theme, mStr, dStr, mPos, dPos } = currentRenderData;
 
-    // Get the current slider value (defaulting to 10 if missing)
     const slider = document.getElementById('pieceSlider');
     const piecesToShow = slider ? parseInt(slider.value) : 10;
 
-    // Draw the two 1x1 square marker pieces in dark subtle gray
     const squareColor = '#252525'; 
     
     // Draw Month Square
@@ -367,44 +377,76 @@ function renderCurrentSolution() {
     drawSolidPiece(ctx, [dPos], squareColor, 3, size);
     drawSolidPiece(ctx, [dPos], '#000000', 10, size); 
 
-    // Draw ONLY the number of puzzle pieces dictated by the slider
+    // Draw the active base hint pieces at full opacity
     solData.slice(0, piecesToShow).forEach(pieceData => {
-        let pName = pieceData.piece;
-        let color = getPieceColor(pName, theme);
-        let cells = pieceData.cells;
-        
-        drawSolidPiece(ctx, cells, color, 3, size);
-        drawSolidPiece(ctx, cells, '#000000', 10, size); 
+        let color = getPieceColor(pieceData.piece, theme);
+        drawSolidPiece(ctx, pieceData.cells, color, 3, size);
+        drawSolidPiece(ctx, pieceData.cells, '#000000', 10, size); 
     });
 
-    // Draw the white text with adjusted sizes for both Month and Day
+    // Draw the "extra" pieces with fading transparency
+    if (extraAlpha > 0) {
+        ctx.globalAlpha = extraAlpha;
+        solData.slice(piecesToShow).forEach(pieceData => {
+            let color = getPieceColor(pieceData.piece, theme);
+            drawSolidPiece(ctx, pieceData.cells, color, 3, size);
+            drawSolidPiece(ctx, pieceData.cells, '#000000', 10, size); 
+        });
+        ctx.globalAlpha = 1.0; // Reset alpha for text rendering
+    }
+
+    // Draw the white text with adjusted sizes
     ctx.fillStyle = 'rgba(255, 255, 255, 0.95)'; 
     ctx.textAlign = 'center'; 
     ctx.textBaseline = 'middle';
     
-    // Month font size
     ctx.font = 'bold 14px Arial'; 
     ctx.fillText(mStr, mPos[0] * size + size/2, mPos[1] * size + size/2);
     
-    // Day font size 
     ctx.font = 'bold 16px Arial'; 
     ctx.fillText(dStr, dPos[0] * size + size/2, dPos[1] * size + size/2);
 
-    container.appendChild(canvas);
     document.getElementById('counterText').innerText = `Showing Solution ${currentSolIndex + 1} of ${currentSolutions.length}`;
     
-    // Make sure the slider becomes visible now that a solution is showing
     const sliderContainer = document.getElementById('sliderContainer');
     if (sliderContainer) {
         sliderContainer.style.display = 'block';
     }
 }
 
+// Animation loop triggered when solution changes
+function triggerFadeAnimation() {
+    if (animationId) cancelAnimationFrame(animationId);
+    
+    const startTime = performance.now();
+    const duration = 1000; // Fade takes exactly 1 second (1000 ms)
+
+    function animate(time) {
+        let elapsed = time - startTime;
+        let progress = elapsed / duration;
+
+        if (progress < 1) {
+            // Easing alpha from 1.0 down to 0
+            let currentAlpha = 1 - progress;
+            renderCurrentSolution(currentAlpha);
+            animationId = requestAnimationFrame(animate);
+        } else {
+            // Ensure we hit absolute zero at the end of the second
+            renderCurrentSolution(0);
+            animationId = null;
+        }
+    }
+    
+    animationId = requestAnimationFrame(animate);
+}
+
 function changeSolution(direction) {
     currentSolIndex += direction;
     if (currentSolIndex < 0) currentSolIndex = currentSolutions.length - 1;
     if (currentSolIndex >= currentSolutions.length) currentSolIndex = 0;
-    renderCurrentSolution();
+    
+    // Launch the fade sequence instead of a static redraw
+    triggerFadeAnimation();
 }
 
 // ==========================================
@@ -432,7 +474,6 @@ async function runSolver() {
     const mPos = mCoords[todayMonthStr]; 
     const dPos = dCoords[todayDayStr];
 
-    // Grabs the static JSON file based on the local date
     const fileName = `solutions/${todayMonthStr}-${todayDayStr}.json`; 
 
     try {
@@ -455,7 +496,8 @@ async function runSolver() {
             currentSolIndex = 0;
             currentRenderData = { theme, mStr: todayMonthStr, dStr: todayDayStr, mPos, dPos };
             
-            renderCurrentSolution();
+            // Draw without the fade on initial load
+            renderCurrentSolution(0);
             
             if (currentSolutions.length > 1) {
                 prevBtn.style.display = 'block';
