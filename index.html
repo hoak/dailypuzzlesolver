@@ -143,7 +143,7 @@
             transform: scale(1.1);
             color: #fff;
         }
-#prevBtn { left: 10px; } 
+        #prevBtn { left: 10px; } 
         #nextBtn { right: 10px; }
         
         canvas {
@@ -200,9 +200,9 @@
     
     <div id="sliderContainer" style="display: none; width: 100%; max-width: 250px; margin: 0 auto 1rem auto; text-align: center;">
          <label for="pieceSlider" style="color: #fff; font-family: Arial; font-size: 16px; font-weight: bold;">
-             Pieces Shown: <span id="pieceCountDisplay">1</span>
+             Hint pieces shown: <span id="pieceCountDisplay">1</span>
         </label><br>
-        <input type="range" id="pieceSlider" min="1" max="14" value="1" style="width: 100%; margin-top: 0.8rem; cursor: pointer;" oninput="updatePieceCount()">
+        <input type="range" id="pieceSlider" min="1" max="10" value="1" style="width: 100%; margin-top: 0.8rem; cursor: pointer;" oninput="updatePieceCount()">
     </div>
 
     <div id="swipeArea" class="viewer-container">
@@ -212,7 +212,7 @@
     </div>
     
     <div id="counterText" class="counter-text">Solution 1 of X</div>
-    <div id="swipeInstruction" class="swipe-instruction">&#8592; Swipe puzzle to see more &#8594;</div>
+    <div id="swipeInstruction" class="swipe-instruction">&#8592; On mobile, swipe left and right to browse solutions &#8594;</div>
     <div id="totalSolutionsText" class="total-note"></div>
 
 <script>
@@ -352,9 +352,9 @@ function renderCurrentSolution() {
     const solData = currentSolutions[currentSolIndex]; 
     const { theme, mStr, dStr, mPos, dPos } = currentRenderData;
 
-    // Get the current slider value
+    // Get the current slider value (defaulting to 10 if missing)
     const slider = document.getElementById('pieceSlider');
-    const piecesToShow = slider ? parseInt(slider.value) : 14;
+    const piecesToShow = slider ? parseInt(slider.value) : 10;
 
     // Draw the two 1x1 square marker pieces in dark subtle gray
     const squareColor = '#252525'; 
