@@ -162,6 +162,14 @@
             display: none; 
             text-align: center;
         }
+
+        .swipe-instruction {
+            font-size: 0.85rem;
+            color: #888;
+            text-align: center;
+            display: none;
+            margin-top: 0.3rem;
+        }
         
         .total-note {
             text-align: center;
@@ -190,7 +198,7 @@
 
     <div id="statusMessage" class="status"></div>
     
-    <div id="sliderContainer" style="display: none; width: 100%; max-width: 400px; margin: 0 auto 1rem auto; text-align: center;">
+    <div id="sliderContainer" style="display: none; width: 100%; max-width: 250px; margin: 0 auto 1rem auto; text-align: center;">
          <label for="pieceSlider" style="color: #fff; font-family: Arial; font-size: 16px; font-weight: bold;">
              Pieces Shown: <span id="pieceCountDisplay">1</span>
         </label><br>
@@ -204,6 +212,7 @@
     </div>
     
     <div id="counterText" class="counter-text">Solution 1 of X</div>
+    <div id="swipeInstruction" class="swipe-instruction">&#8592; Swipe puzzle to see more &#8594;</div>
     <div id="totalSolutionsText" class="total-note"></div>
 
 <script>
@@ -407,12 +416,17 @@ async function runSolver() {
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
     const counterText = document.getElementById('counterText');
+    const swipeInstruction = document.getElementById('swipeInstruction');
     const container = document.getElementById('canvasContainer');
     const totalText = document.getElementById('totalSolutionsText');
     
     container.innerHTML = '';
     totalText.innerText = ''; 
-    prevBtn.style.display = 'none'; nextBtn.style.display = 'none'; counterText.style.display = 'none';
+    prevBtn.style.display = 'none'; 
+    nextBtn.style.display = 'none'; 
+    counterText.style.display = 'none';
+    swipeInstruction.style.display = 'none';
+    
     statusMsg.innerText = "Retrieving today's solutions...";
     
     const mPos = mCoords[todayMonthStr]; 
@@ -447,6 +461,7 @@ async function runSolver() {
                 prevBtn.style.display = 'block';
                 nextBtn.style.display = 'block';
                 counterText.style.display = 'block';
+                swipeInstruction.style.display = 'block';
             }
         } else {
             statusMsg.innerText = `No solutions recorded for ${todayMonthStr} ${todayDayStr}.`;
